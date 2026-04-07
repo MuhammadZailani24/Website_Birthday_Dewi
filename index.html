@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: black; color: white;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; 
+            height: 100vh; width: 100vw;
+        }
+
+        /* Pembungkus Scene */
+        .scene {
+            position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 1s ease-in-out;
+            pointer-events: none; z-index: 10;
+        }
+
+        .scene.active { opacity: 1; pointer-events: auto; }
+
+        /* Scene 1 & 2: Matrix Canvas (Background) */
+        #matrix-container {
+            position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1; transition: opacity 1.5s ease-in-out;
+        }
+
+        /* Text Styling */
+        .big-text {
+            font-size: 5rem; color: #ff66b2;
+            text-shadow: 0 0 10px #ff66b2, 0 0 20px #ff66b2;
+            font-weight: bold; text-transform: uppercase;
+            letter-spacing: 5px; text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Background Bintang (Untuk Kucing, Galeri, dan Akhir) */
+        .stars-bg {
+            position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #1a001a 0%, #000000 100%);
+            z-index: 0; opacity: 0; transition: opacity 1.5s;
+        }
+        .stars-bg.active { opacity: 1; }
+
+        .stars {
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat; background-size: 200px 200px;
+            animation: twinkle 4s infinite;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; }
+        }
+
+        /* Scene 3: Cat Styling */
+        .cat-img { width: 200px; margin-bottom: 20px; }
+        .cat-text {
+            font-family: 'Arial', cursive; font-size: 2.5rem;
+            color: #ffb3d9; text-shadow: 0 0 10px #ff3399;
+        }
+
+        /* Scene 4: Gallery Card Styling */
+        .gallery-container {
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 102, 178, 0.5);
+            text-align: center; width: 90%; max-width: 400px;
+        }
+
+        .gallery-message {
+            color: #333; font-family: 'Arial', sans-serif;
+            font-size: 1.2rem; margin-bottom: 15px; font-style: italic;
+            min-height: 30px;
+        }
+
+        .photo-slider {
+            width: 100%; height: 350px; border-radius: 10px;
+            overflow: hidden; position: relative; background: #ffe6f2;
+        }
+
+        .photo-slider img {
+            width: 100%; height: 100%; object-fit: cover;
+            position: absolute; top: 0; left: 0;
+            opacity: 0; transition: opacity 0.5s ease;
+        }
+
+        .photo-slider img.active { opacity: 1; }
+
+        .controls { margin-top: 15px; }
+
+        button {
+            background-color: #ff66b2; color: white; border: none;
+            padding: 10px 20px; border-radius: 5px; cursor: pointer;
+            font-weight: bold; margin: 0 5px; transition: 0.3s;
+        }
+        button:hover { background-color: #ff3399; }
+
+        /* Scene 5: Heart Shape Photos */
+        #heart-container {
+            position: relative; width: 100vw; height: 100vh;
+        }
+        .heart-pic {
+            position: absolute; top: 0; left: 0;
+            width: 50px; height: 50px; border-radius: 10px;
+            border: 2px solid #ff66b2; object-fit: cover;
+            opacity: 0; 
+            /* Mulai dari tengah bawah sebelum melayang ke posisi masing-masing */
+            transform: translate(50vw, 100vh) scale(0); 
+            transition: transform 2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 2s;
+        }
+        /* Penyesuaian khusus untuk layar HP (lebar maksimal 600px) */
+@media screen and (max-width: 600px) {
+    .big-text {
+        font-size: 3.5rem; /* Mengecilkan teks agar muat di HP */
+    }
+    .photo-slider {
+        height: 300px; /* Menyesuaikan tinggi foto galeri */
+    }
+}
+    </style>
+</head>
+<body>
+
+    <div id="matrix-container">
+        <canvas id="matrix-canvas"></canvas>
+    </div>
+    <div id="stars-background" class="stars-bg">
+        <div class="stars"></div>
+    </div>
+
+    <div id="scene-countdown" class="scene active">
+        <div class="big-text" id="countdown-text">3</div>
+    </div>
+
+    <div id="scene-text" class="scene">
+        <div class="big-text" id="sequence-text"></div>
+    </div>
+
+    <div id="scene-cat" class="scene">
+        <img src="Kucing.gif" alt="Happy Birthday Cat" class="cat-img">
+        <div class="cat-text">Happy Birthday!</div>
+    </div>
+
+    <div id="scene-gallery" class="scene">
+        <div class="gallery-container">
+            <div class="gallery-message" id="gallery-message">Happy Birthday Sayang 💕</div>
+            <div class="photo-slider" id="photo-slider">
+                <img src="Poto1.jpg" class="active" alt="Foto 1">
+                <img src="Poto2.jpg" alt="Foto 2">
+                <img src="Poto3.jpg" alt="Foto 3">
+                <img src="Poto4.jpg" alt="Foto 4">
+            </div>
+            <div class="controls">
+                <button onclick="nextPhoto()" id="btn-next">Selanjutnya >></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene-heart" class="scene">
+        <div id="heart-container"></div>
+    </div>
+
+    <script>
+        // --- 1. SETUP MATRIX RAIN ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array.from({ length: columns }).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff66b2'; 
+            ctx.font = fontSize + 'px Courier New';
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        let matrixInterval = setInterval(drawMatrix, 50);
+
+        // --- 2. SEQUENCE CONTROLLER ---
+        const targetName = "Dewi Setiyowati"; // Ganti dengan nama pasanganmu
+        
+        const sceneCountdown = document.getElementById('scene-countdown');
+        const sceneText = document.getElementById('scene-text');
+        const sceneCat = document.getElementById('scene-cat');
+        const sceneGallery = document.getElementById('scene-gallery');
+        const sceneHeart = document.getElementById('scene-heart');
+        const starsBg = document.getElementById('stars-background');
+        const matrixBg = document.getElementById('matrix-container');
+
+        const countdownEl = document.getElementById('countdown-text');
+        const sequenceTextEl = document.getElementById('sequence-text');
+
+        // Alur Cerita
+        setTimeout(() => countdownEl.innerText = "2", 1000);
+        setTimeout(() => countdownEl.innerText = "1", 2000);
+        
+        setTimeout(() => {
+            // Pindah ke Teks (Matrix tetap jalan)
+            sceneCountdown.classList.remove('active');
+            sceneText.classList.add('active');
+            
+            sequenceTextEl.innerText = "HAPPY";
+            setTimeout(() => sequenceTextEl.innerText = "BIRTHDAY", 1500);
+            setTimeout(() => sequenceTextEl.innerText = "TO", 3000);
+            setTimeout(() => sequenceTextEl.innerText = targetName, 4500);
+            setTimeout(() => sequenceTextEl.innerHTML = "❤️", 6000);
+            
+            // Transisi dari Matrix ke Kucing & Bintang
+            setTimeout(() => {
+                sceneText.classList.remove('active');
+                matrixBg.style.opacity = 0; // Matrix memudar
+                starsBg.classList.add('active'); // Bintang muncul
+                sceneCat.classList.add('active'); // Kucing muncul
+                
+                setTimeout(() => clearInterval(matrixInterval), 1500); // Matikan engine matrix untuk hemat memori
+
+                // Transisi dari Kucing ke Galeri Foto
+                setTimeout(() => {
+                    sceneCat.classList.remove('active');
+                    sceneGallery.classList.add('active');
+                }, 4000); // Kucing tampil 4 detik
+
+            }, 7500);
+
+        }, 3000);
+
+        // --- 3. GALLERY LOGIC ---
+        let currentPhotoIndex = 0;
+        const photos = document.querySelectorAll('#photo-slider img');
+        const messages = [
+            "Happy Birthday Sayang 💕",
+            "As long as you're smiling...",
+            "I'm happy. Stay happy, my love.",
+            "Semoga hal baik selalu bersamamu!"
+        ];
+        const messageEl = document.getElementById('gallery-message');
+        const btnNext = document.getElementById('btn-next');
+
+        function showPhoto(index) {
+            photos.forEach(img => img.classList.remove('active'));
+            photos[index].classList.add('active');
+            messageEl.innerText = messages[index];
+        }
+
+        function nextPhoto() {
+            if (currentPhotoIndex < photos.length - 1) {
+                currentPhotoIndex++;
+                showPhoto(currentPhotoIndex);
+                if (currentPhotoIndex === photos.length - 1) {
+                    btnNext.innerText = "Lihat Kejutan!";
+                }
+            } else {
+                // Tutup Galeri, jalankan animasi Love
+                sceneGallery.classList.remove('active');
+                sceneHeart.classList.add('active');
+                createHeartPhotos();
+            }
+        }
+
+        // --- 4. HEART SHAPE LOGIC ---
+        function createHeartPhotos() {
+            const container = document.getElementById('heart-container');
+            const totalPhotos = 35; // Jumlah total foto penyusun love (tetap 35 agar rapat)
+            const scale = Math.min(window.innerWidth, window.innerHeight) / 35; 
+
+            for(let i = 0; i < totalPhotos; i++) {
+                let img = document.createElement('img');
+                
+                // MENGGUNAKAN 11 FOTO SECARA BERGANTIAN
+                // i % 11 akan menghasilkan angka 0 sampai 10, lalu ditambah 1 menjadi 1 sampai 11
+                let photoNumber = (i % 11) + 1; 
+                img.src = "Poto" + photoNumber + ".jpg"; 
+                
+                img.className = 'heart-pic';
+                container.appendChild(img);
+
+                // Rumus Parametrik Hati (Love)
+                let t = (i / totalPhotos) * Math.PI * 2;
+                let x = 16 * Math.pow(Math.sin(t), 3);
+                let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                
+                // Kalkulasi ke koordinat layar (tengah)
+                let px = (window.innerWidth / 2) + (x * scale) - 25; 
+                let py = (window.innerHeight / 2) + (y * scale) - 25 - 50; 
+
+                // Animasi terbang satu per satu
+                setTimeout(() => {
+                    img.style.opacity = 1;
+                    img.style.transform = `translate(${px}px, ${py}px) scale(1)`;
+                }, i * 150);
+            }
+        }
+    </script>
+</body>
+</html>
